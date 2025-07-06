@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 const Page = async () => {
 
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: headers(),
   });
 
   if(!session){

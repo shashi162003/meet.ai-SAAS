@@ -21,7 +21,7 @@ const Page = async ({ searchParams }: Props) => {
   const filters = await loadSearchParams(searchParams);
 
    const session = await auth.api.getSession({
-        headers: await headers(),
+        headers: headers(),
       });
     
       if(!session){

@@ -18,7 +18,7 @@ const Page = async ({ params }: Props) => {
     const {meetingId} = await params;
 
     const session = await auth.api.getSession({
-        headers: await headers(),
+        headers: headers(),
     })
 
     if(!session){
