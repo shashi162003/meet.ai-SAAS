@@ -87,42 +87,60 @@ export const meetingsRouter = createTRPCRouter({
         })
         .returning();
 
-        const call = streamVideo.video.call("default", createdMeeting.id);
-        await call.create({
-          data: {
-            created_by_id: ctx.auth.user.id,
-            custom: {
-              meetingId: createdMeeting.id,
-              meetingName: createdMeeting.name
-            },
-            settings_override: {
-              transcription: {
-                language: "en",
-                mode: "auto-on",
-                closed_caption_mode: "auto-on",
-              },
-              recording: {
-                mode: "auto-on",
-                quality: "1080p",
-              }
-            }
-          }
-        })
+      const [existingAgent] = await db.select().from(agents).where(eq(agents.id, createdMeeting.agentId));
+      
+      if (!existingAgent) {
+        throw new TRPCError({code: "NOT_FOUND", message: "Agent not found"});
+      }
 
-        const [existingAgent] = await db.select().from(agents).where(eq(agents.id, createdMeeting.agentId));
-        
-        if(!existingAgent){
-          throw new TRPCError({code: "NOT_FOUND", message: "Agent not found"});
+      // Create the agent user in Stream first
+      await streamVideo.upsertUsers([
+        {
+          id: existingAgent.id,
+          name: existingAgent.name,
+          role: "user",
+          image: generateAvatarUri({seed: existingAgent.name, variant: "botttsNeutral"})
         }
+      ]);
 
-        await streamVideo.upsertUsers([
-          {
-            id: existingAgent.id,
-            name: existingAgent.name,
-            role: "user",
-            image: generateAvatarUri({seed: existingAgent.name, variant: "botttsNeutral"})
-          }
-        ])
+      // Create the call with proper configuration
+      const call = streamVideo.video.call("default", createdMeeting.id);
+      await call.create({
+        data: {
+          created_by_id: ctx.auth.user.id,
+          custom: {
+            meetingId: createdMeeting.id,
+            meetingName: createdMeeting.name,
+            agentId: existingAgent.id,
+            agentName: existingAgent.name,
+          },
+          settings_override: {
+            transcription: {
+              language: "en",
+              mode: "auto-on",
+              closed_caption_mode: "auto-on",
+            },
+            recording: {
+              mode: "auto-on",
+              quality: "1080p",
+            },
+            audio: {
+              mic_default_on: true,
+              speaker_default_on: true,
+            },
+          },
+          members: [
+            {
+              user_id: ctx.auth.user.id,
+              role: "admin",
+            },
+            {
+              user_id: existingAgent.id,
+              role: "user",
+            },
+          ],
+        }
+      });
 
       return createdMeeting;
     }),
