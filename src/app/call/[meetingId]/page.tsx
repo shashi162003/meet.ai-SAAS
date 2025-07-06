@@ -5,6 +5,8 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
     params: Promise<{ meetingId: string }>;
 }
