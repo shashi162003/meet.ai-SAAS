@@ -81,7 +81,7 @@ export const CallConnect = ({
   return (
     <StreamVideoProvider client={client}>
       <StreamCall call={call}>
-        <CallUI meetingName={meetingName} />
+        <CallUI meetingName={meetingName} meetingId={meetingId} />
       </StreamCall>
     </StreamVideoProvider>
   );
